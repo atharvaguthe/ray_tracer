@@ -6,37 +6,18 @@
 #include <algorithm>
 
 #include "ray.h"
+#include "sphere.h"
 
-bool hit_sphere(const Vec3& center, double radius, const Ray& ray, double& t) {
-  Vec3 oc = ray.origin - center;
-
-  double a = ray.direction.dot(ray.direction);
-  double half_b = oc.dot(ray.direction);
-  double c = oc.dot(oc) - radius * radius;
-
-  double discriminant = half_b * half_b - a * c;
-
-  if (discriminant < 0)
-    return false;
-  double sqrt_d = std::sqrt(discriminant);
-  double root = (-half_b - sqrt_d) / a;
-  if (root <= 0)
-    root = (-half_b + sqrt_d) / a;
-  if(root <= 0) 
-    return false;
-  t = root;
-  return true;
-}
 
 Vec3 ray_color(const Ray& ray) {
-  double t;
 
-  Vec3 sphere_center = {0, 0, -1};
+  Sphere sphere({0,0,-1}, 0.5);
 
-  if (hit_sphere(sphere_center, 0.5, ray, t)) {
-    Vec3 point = ray.at(t);
-    Vec3 normal = (point - sphere_center).normalized();
+  HitRecord record;
 
+  if (sphere.hit(ray, 0.001, INFINITY, record)) {
+
+    Vec3 normal = record.normal;
     return{
       0.5 * (normal.x + 1.0),
       0.5 * (normal.y + 1.0),
