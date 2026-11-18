@@ -1,0 +1,19 @@
+
+# Build files 
+build/
+
+#Compiled files 
+*.o 
+*.out 
+*.so
+*.a
+
+#IDE files 
+.vscode/
+.idea/ 
+
+#os files 
+.DS_Store
+
+#renders 
+/output/
