@@ -5,42 +5,7 @@
 #include <cmath>
 #include <algorithm>
 
-struct Vec3 {
-  double x, y, z;
-
-  Vec3 operator+(const Vec3& v) const {
-    return {x + v.x, y + v.y, z + v.z};
-  }
-
-  Vec3 operator-(const Vec3& v) const {
-    return {x - v.x, y - v.y, z - v.z};
-  }
-
-  Vec3 operator*(double t) const {
-    return {x * t, y * t, z * t};
-  }
-
-  double dot(const Vec3& v) const {
-    return x * v.x + y * v.y + z * v.z;
-  }
-
-  double length() const {
-    return std::sqrt(dot(*this));
-  }
-
-  Vec3 normalized() const {
-    return *this * (1.0/length());
-  }
-};
-
-struct Ray {
-  Vec3 origin;
-  Vec3 direction;
-
-  Vec3 at (double t) const {
-    return origin + direction * t;
-  }
-};
+#include "ray.h"
 
 bool hit_sphere(const Vec3& center, double radius, const Ray& ray, double& t) {
   Vec3 oc = ray.origin - center;
