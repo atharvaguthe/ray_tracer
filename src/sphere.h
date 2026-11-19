@@ -3,31 +3,18 @@
 #ifndef SPHERE_H
 #define SPHERE_H 
 
-#include "ray.h"
+#include "hittable.h"
+#include <cmath>
 
-struct HitRecord {
-  Vec3 point;
-  Vec3 normal;
-  double t;
-  bool front_face;
 
-  void set_face_normal(const Ray& ray, const Vec3& outward_normal) {
-    front_face = ray.direction.dot(outward_normal) < 0;
-
-    normal = front_face 
-      ? outward_normal
-      : outward_normal * -1.0;
-  }
-};
-
-class Sphere {
+class Sphere : public Hittable {
 public:
   Vec3 center;
   double radius;
 
   Sphere(const Vec3& center, double radius) : center(center), radius(radius) {}
 
-  bool hit(const Ray& ray, double t_min, double t_max, HitRecord& record) const {
+  bool hit(const Ray& ray, double t_min, double t_max, HitRecord& record) const override {
     Vec3 oc = ray.origin - center;
 
     double a = ray.direction.dot(ray.direction);
