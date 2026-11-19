@@ -29,6 +29,15 @@ struct Vec3 {
   Vec3 normalized() const {
     return *this * (1.0/length());
   }
+
+  Vec3 operator*(const Vec3& v) const {
+    return{
+      x * v.x,
+      y * v.y,
+      z * v.z
+    };
+  }
 };
+
 
 #endif

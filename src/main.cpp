@@ -15,22 +15,53 @@ Vec3 ray_color(const Ray& ray, const Scene& scene) {
 
   HitRecord record;
 
-  if (scene.hit(ray, 0.001, INFINITY, record)) {
+  if (!scene.hit(ray, 0.001, INFINITY, record)) {
 
-    Vec3 normal = record.normal;
+    double a = 0.5 * (ray.direction.y + 1.0);
 
-    return{
-      0.5 * (normal.x + 1.0),
-      0.5 * (normal.y + 1.0),
-      0.5 * (normal.z + 1.0)
-    };
+    Vec3 white = {1.0, 1.0, 1.0};
+    Vec3 blue = {0.5, 0.7, 1.0};
+
+    return white * (1.0 - a) + blue * a;
   }
-  double a = 0.5 * (ray.direction.y + 1.0);
+  Vec3 light_position = {3.0, 2.0, -1.0};
 
-  Vec3 white = {1.0, 1.0, 1.0};
-  Vec3 blue = {0.5, 0.7, 1.0};
+  Vec3 to_light = light_position - record.point;
 
-  return white * (1.0 - a) + blue * a;
+  double light_distance = to_light.length();
+
+  Vec3 light_direction = to_light.normalized();
+
+  double diffuse = std::max(
+      0.0,
+      record.normal.dot(light_direction)
+      );
+
+  Ray shadow_ray;
+
+  shadow_ray.origin = record.point + record.normal * 0.001;
+
+  shadow_ray.direction = light_direction;
+
+  HitRecord shadow_record;
+
+  bool in_shadow = scene.hit(
+      shadow_ray,
+      0.001,
+      light_distance - 0.001,
+      shadow_record
+      );
+
+  if (in_shadow) {
+    diffuse = 0.0;
+  }
+  double ambient = 0.18;
+  double intensity = ambient + (1.0 - ambient) * diffuse;
+
+  Vec3 light_color = {1.0,1.0,1.0};
+
+  return record.albedo * light_color * intensity;
+
 }
 
 int main() {
@@ -43,15 +74,19 @@ int main() {
   Scene world;
   
   world.add(std::make_shared<Sphere>(
-        Vec3{0,0,-1},0.5
+        Vec3{0,0,-1},0.5, Vec3{0.8,0.15,0.15}
         ));
 
   world.add(std::make_shared<Sphere>(
-        Vec3{1,0,-1.5},0.5
+        Vec3{1,0,-1.5},0.5,Vec3{0.15,0.8,0.2}
         ));
 
   world.add(std::make_shared<Sphere>(
-        Vec3{-1,0,-1.5},0.5
+        Vec3{-1,0,-1.5},0.5,Vec3{0.15,0.25,0.9}
+        ));
+
+  world.add(std::make_shared<Sphere>(
+        Vec3{0,-100.5,-1},100.0,Vec3{0.7,0.7,0.7}
         ));
 
   for(int j = height - 1; j >= 0; --j){

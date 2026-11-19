@@ -8,6 +8,7 @@
 struct HitRecord {
   Vec3 point;
   Vec3 normal;
+  Vec3 albedo;
   double t;
   bool front_face;
 
