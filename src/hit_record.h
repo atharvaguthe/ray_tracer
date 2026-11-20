@@ -4,6 +4,8 @@
 #define HIT_RECORD_H
 
 #include "ray.h"
+#include "material.h"
+#include <memory>
 
 struct HitRecord {
   Vec3 point;
@@ -11,6 +13,8 @@ struct HitRecord {
   Vec3 albedo;
   double t;
   bool front_face;
+
+  std::shared_ptr<Material> mat_ptr;
 
   void set_face_normal(
       const Ray& ray, const Vec3& outward_normal

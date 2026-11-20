@@ -39,5 +39,9 @@ struct Vec3 {
   }
 };
 
+inline Vec3 reflect(const Vec3& v, const Vec3& n) {
+  return v - n * (2.0 * v.dot(n));
+}
+
 
 #endif

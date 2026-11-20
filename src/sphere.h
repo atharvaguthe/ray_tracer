@@ -4,6 +4,8 @@
 #define SPHERE_H 
 
 #include "hittable.h"
+#include "material.h"
+#include <memory>
 #include <cmath>
 
 
@@ -11,10 +13,10 @@ class Sphere : public Hittable {
 public:
   Vec3 center;
   double radius;
-  Vec3 albedo;
+  std::shared_ptr<Material> mat_ptr;
 
-  Sphere(const Vec3& center, double radius, const Vec3& albedo) : 
-    center(center), radius(radius), albedo(albedo) {}
+  Sphere(const Vec3& center, double radius,std::shared_ptr<Material> mat_ptr) : 
+    center(center), radius(radius), mat_ptr(mat_ptr) {}
 
   bool hit(const Ray& ray, double t_min, double t_max, HitRecord& record) const override {
     Vec3 oc = ray.origin - center;
@@ -25,7 +27,7 @@ public:
 
     double discriminant = half_b * half_b - a * c;
 
-    record.albedo = albedo;
+    record.mat_ptr = mat_ptr;
 
     if(discriminant < 0)
       return false;

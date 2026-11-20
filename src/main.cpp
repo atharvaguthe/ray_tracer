@@ -11,7 +11,10 @@
 #include "scene.h"
 
 
-Vec3 ray_color(const Ray& ray, const Scene& scene) {
+Vec3 ray_color(const Ray& ray, const Scene& scene,int depth) {
+
+  if (depth <= 0)
+    return {0,0,0};
 
   HitRecord record;
 
@@ -24,7 +27,7 @@ Vec3 ray_color(const Ray& ray, const Scene& scene) {
 
     return white * (1.0 - a) + blue * a;
   }
-  Vec3 light_position = {3.0, 2.0, -1.0};
+  Vec3 light_position = {-2.0, 4.0, -1.0};
 
   Vec3 to_light = light_position - record.point;
 
@@ -55,12 +58,26 @@ Vec3 ray_color(const Ray& ray, const Scene& scene) {
   if (in_shadow) {
     diffuse = 0.0;
   }
-  double ambient = 0.18;
+  double ambient = 0.12;
   double intensity = ambient + (1.0 - ambient) * diffuse;
 
-  Vec3 light_color = {1.0,1.0,1.0};
+  Vec3 local_color = record.mat_ptr -> albedo() * intensity;
+  double reflection = record.mat_ptr -> reflectivity();
 
-  return record.albedo * light_color * intensity;
+  if (reflection <= 0.0)
+    return local_color;
+
+  Vec3 reflected_direction = reflect(ray.direction, record.normal);
+
+  Ray reflected_ray;
+
+  reflected_ray.origin = record.point + record.normal * 0.001;
+
+  reflected_ray.direction = reflected_direction.normalized();
+
+  Vec3 reflected_color = ray_color(reflected_ray,scene,depth - 1);
+
+  return local_color * (1.0 - reflection) + reflected_color * reflection;
 
 }
 
@@ -69,24 +86,24 @@ int main() {
   const int height = 225;
 
   std::ofstream image("output/first_render.ppm");
-  image << "P3\n" << width << " " << height << "\n225\n";
+  image << "P3\n" << width << " " << height << "\n255\n";
 
   Scene world;
   
   world.add(std::make_shared<Sphere>(
-        Vec3{0,0,-1},0.5, Vec3{0.8,0.15,0.15}
+        Vec3{0,0,-1},0.5, std::make_shared<Lambertian> (Vec3{0.8,0.1,0.1})
         ));
 
   world.add(std::make_shared<Sphere>(
-        Vec3{1,0,-1.5},0.5,Vec3{0.15,0.8,0.2}
+        Vec3{1,0,-1.5},0.5, std::make_shared<Lambertian> (Vec3{0.1,0.2,0.8})
         ));
 
   world.add(std::make_shared<Sphere>(
-        Vec3{-1,0,-1.5},0.5,Vec3{0.15,0.25,0.9}
+        Vec3{-1,0,-1.5},0.5,std::make_shared<Metal> (Vec3{0.8,0.8,0.8},0.85)
         ));
 
   world.add(std::make_shared<Sphere>(
-        Vec3{0,-100.5,-1},100.0,Vec3{0.7,0.7,0.7}
+        Vec3{0,-100.5,-1},100.0,std::make_shared<Lambertian> (Vec3{0.7,0.7,0.7})
         ));
 
   for(int j = height - 1; j >= 0; --j){
@@ -103,7 +120,7 @@ int main() {
           2.0 * v - 1.0, -1.0
       }.normalized();
 
-      Vec3 color = ray_color(ray,world);
+      Vec3 color = ray_color(ray,world,10);
 
       int r = int(255.999 * std::clamp(color.x,0.0,1.0));
       int g = int(255.999 * std::clamp(color.y,0.0,1.0));
