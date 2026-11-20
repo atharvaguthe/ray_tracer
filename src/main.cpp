@@ -27,6 +27,49 @@ Vec3 ray_color(const Ray& ray, const Scene& scene,int depth) {
 
     return white * (1.0 - a) + blue * a;
   }
+
+  // Dielectric material (glass)
+  if (record.mat_ptr -> is_dielectric()) {
+    double refraction_ratio = record.front_face ? (1.0 / record.mat_ptr -> refractive_index()) : record.mat_ptr -> refractive_index();
+
+    double cos_theta = std::min((-ray.direction).dot(record.normal), 1.0);
+
+    double sin_theta = std::sqrt(1.0 - cos_theta * cos_theta);
+
+    bool cannot_refract = refraction_ratio * sin_theta > 1.0;
+
+    double reflect_probability = cannot_refract ? 1.0 : schlick(cos_theta, refraction_ratio);
+
+    Vec3 reflected_direction = reflect(ray.direction, record.normal);
+
+    Ray reflected_ray;
+
+    reflected_ray.origin = record.point + record.normal * 0.001;
+
+    reflected_ray.direction = reflected_direction.normalized();
+
+    Vec3 reflected_color = ray_color(reflected_ray, scene, depth - 1);
+
+    Vec3 refracted_color = {0,0,0};
+
+    if(!cannot_refract) {
+      Vec3 refracted_direction = refract(ray.direction, record.normal,refraction_ratio);
+
+      Ray refracted_ray;
+
+      refracted_ray.origin = record.point - record.normal * 0.001;
+
+      refracted_ray.direction = refracted_direction.normalized();
+
+      refracted_color = ray_color(refracted_ray, scene, depth - 1);
+
+    }
+    return reflected_color * reflect_probability +
+      refracted_color * (1.0 - reflect_probability);
+  }
+
+
+  // Shadow ray
   Vec3 light_position = {-2.0, 4.0, -1.0};
 
   Vec3 to_light = light_position - record.point;
@@ -95,7 +138,7 @@ int main() {
         ));
 
   world.add(std::make_shared<Sphere>(
-        Vec3{1,0,-1.5},0.5, std::make_shared<Lambertian> (Vec3{0.1,0.2,0.8})
+        Vec3{1,0,-1.5},0.5, std::make_shared<Dielectric> (1.5)
         ));
 
   world.add(std::make_shared<Sphere>(
