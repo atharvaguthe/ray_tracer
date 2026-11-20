@@ -9,6 +9,7 @@
 #include "ray.h"
 #include "sphere.h"
 #include "scene.h"
+#include "random.h"
 
 
 Vec3 ray_color(const Ray& ray, const Scene& scene,int depth) {
@@ -149,25 +150,30 @@ int main() {
         Vec3{0,-100.5,-1},100.0,std::make_shared<Lambertian> (Vec3{0.7,0.7,0.7})
         ));
 
+  const int samples_per_pixel = 256;
+
   for(int j = height - 1; j >= 0; --j){
-    std::cerr << "\rScanlines remaining: " << j << " " << std::flush;
-
     for(int i = 0; i < width; ++i) {
-      double u = double(i) / (width - 1);
-      double v = double(j) / (height - 1);
+      Vec3 pixel_color = {0,0,0};
 
-      Ray ray;
-      ray.origin = {0,0,0};
-      ray.direction = Vec3{
-        (2.0 * u - 1.0) * double(width) / height,
-          2.0 * v - 1.0, -1.0
-      }.normalized();
+      for (int s = 0; s < samples_per_pixel; ++s){
+        double u = (i + random_double()) / (width - 1);
+        double v = (j + random_double()) / (height - 1);
+        Ray ray;
+        ray.origin = {0,0,0};
+        ray.direction = Vec3{
+          (2.0 * u - 1.0) * double(width) / height,
+            2.0 * v - 1.0, -1.0
+        }.normalized();
 
-      Vec3 color = ray_color(ray,world,10);
+        pixel_color = pixel_color + ray_color(ray, world, 10);
 
-      int r = int(255.999 * std::clamp(color.x,0.0,1.0));
-      int g = int(255.999 * std::clamp(color.y,0.0,1.0));
-      int b = int(255.999 * std::clamp(color.z,0.0,1.0));
+      }
+      pixel_color = pixel_color * (1.0 / samples_per_pixel);
+
+      int r = int(255.999 * std::clamp(pixel_color.x,0.0,1.0));
+      int g = int(255.999 * std::clamp(pixel_color.y,0.0,1.0));
+      int b = int(255.999 * std::clamp(pixel_color.z,0.0,1.0));
 
       image << r << " " << g << " " << b << "\n";
     }
