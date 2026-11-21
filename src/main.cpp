@@ -150,6 +150,20 @@ int main() {
         Vec3{0,-100.5,-1},100.0,std::make_shared<Lambertian> (Vec3{0.7,0.7,0.7})
         ));
 
+  double viewport_height = 2.0;
+  double viewport_width = viewport_height * double(width) / height;
+
+  double focal_length = 1.0;
+  double lens_radius = 0.0;
+
+  Vec3 camera_origin = {0,0,0};
+
+  Vec3 horizontal = {viewport_width,0,0};
+  Vec3 vertical = {0,viewport_height,0};
+
+  Vec3 lower_left_corner = camera_origin
+    - horizontal * 0.5 - vertical * 0.5 - Vec3{0,0,focal_length};
+
   const int samples_per_pixel = 256;
 
   for(int j = height - 1; j >= 0; --j){
@@ -159,12 +173,16 @@ int main() {
       for (int s = 0; s < samples_per_pixel; ++s){
         double u = (i + random_double()) / (width - 1);
         double v = (j + random_double()) / (height - 1);
+
+        Vec3 rd = random_in_unit_disk() * lens_radius;
+        Vec3 offset = {rd.x,rd.y,0.0};
+
+        Vec3 ray_origin = camera_origin * offset;
+        Vec3 ray_direction = lower_left_corner + horizontal * u 
+          + vertical * v - camera_origin - offset;
         Ray ray;
-        ray.origin = {0,0,0};
-        ray.direction = Vec3{
-          (2.0 * u - 1.0) * double(width) / height,
-            2.0 * v - 1.0, -1.0
-        }.normalized();
+        ray.origin = ray_origin;
+        ray.direction = ray_direction.normalized();
 
         pixel_color = pixel_color + ray_color(ray, world, 10);
 
